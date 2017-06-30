@@ -18,16 +18,18 @@
 
 package org.pentaho.di.baserver.utils.inspector;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import org.pentaho.di.baserver.utils.web.Http;
+import org.pentaho.di.baserver.utils.web.HttpParameter;
+
+import java.util.*;
 
 public class Endpoint implements Comparable<Endpoint> {
   // region Fields
 
   private String id;
   private String path;
-  private HttpMethod httpMethod;
-  private ArrayList<QueryParam> queryParams;
+  private Http httpMethod;
+  private Set<ParamDescription> paramDescriptions;
   private boolean deprecated;
   private boolean supported;
   private String documentation;
@@ -52,16 +54,23 @@ public class Endpoint implements Comparable<Endpoint> {
     this.path = path;
   }
 
-  public HttpMethod getHttpMethod() {
+  public Http getHttpMethod() {
     return this.httpMethod;
   }
 
-  public void setHttpMethod( HttpMethod httpMethod ) {
+  public void setHttpMethod( Http httpMethod ) {
     this.httpMethod = httpMethod;
   }
 
-  public Collection<QueryParam> getQueryParams() {
-    return this.queryParams;
+  public Set<ParamDescription> getParamDescriptions() {
+    return this.paramDescriptions;
+  }
+
+  public ParamDescription getParameterDescription( String paramName ) {
+    if ( paramName == null ) {
+      return null;
+    }
+    return paramDescriptions.stream().filter( description -> paramName.equals( description.getName() ) ).findAny().orElse( null );
   }
 
   public boolean isDeprecated() {
@@ -93,7 +102,7 @@ public class Endpoint implements Comparable<Endpoint> {
   // region Constructors
 
   public Endpoint() {
-    this.queryParams = new ArrayList<QueryParam>();
+    this.paramDescriptions = new HashSet<ParamDescription>();
   }
 
   // endregion

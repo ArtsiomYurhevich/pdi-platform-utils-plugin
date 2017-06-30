@@ -20,6 +20,7 @@ package org.pentaho.di.baserver.utils.inspector;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.di.baserver.utils.web.Http;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,7 +36,7 @@ public class EndpointTest {
 
   @Test
   public void testConstructor() {
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParamDescriptions().size(), 0 );
   }
 
   @Test
@@ -48,7 +49,7 @@ public class EndpointTest {
     endpoint.setPath( path );
     assertEquals( endpoint.getPath(), path );
 
-    HttpMethod httpMethod = HttpMethod.GET;
+    Http httpMethod = Http.GET;
     endpoint.setHttpMethod( httpMethod );
     assertEquals( endpoint.getHttpMethod(), httpMethod );
   }
@@ -76,7 +77,7 @@ public class EndpointTest {
     endpoint2.setId( id );
     assertTrue( endpoint.equals( endpoint2 ) );
     assertFalse( endpoint.equals( null ) );
-    assertFalse( endpoint.equals( new QueryParam() ) );
+    assertFalse( endpoint.equals( new ParamDescription() ) );
 
     endpoint2.setId( "12345" );
     assertFalse( endpoint.equals( endpoint2 ) );

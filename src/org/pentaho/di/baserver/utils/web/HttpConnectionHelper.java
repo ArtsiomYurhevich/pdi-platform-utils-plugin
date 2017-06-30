@@ -56,7 +56,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class HttpConnectionHelper {
 
@@ -69,9 +71,8 @@ public class HttpConnectionHelper {
     return _instance;
   }
 
-  public Response invokeEndpoint( final String serverUrl, final String userName, final String password,
-      final String moduleName, final String endpointPath, final String httpMethod,
-      final Map<String, String> queryParameters ) {
+  public Response invokeEndpoint( String serverUrl, String userName, String password,
+                                  String moduleName, String endpointPath, String httpMethod, List<HttpParameter> httpParameters ) {
 
     Response response = new Response();
 
@@ -95,7 +96,7 @@ public class HttpConnectionHelper {
     logger.info( "requestUrl = " + requestUrl );
 
     try {
-      response = callHttp( requestUrl, queryParameters, httpMethod, userName, password );
+      response = callHttp( requestUrl, httpParameters, httpMethod, userName, password );
     } catch ( IOException ex ) {
       logger.error( "Failed ", ex );
     } catch ( KettleStepException ex ) {
@@ -105,18 +106,18 @@ public class HttpConnectionHelper {
     return response;
   }
 
-  public Response invokeEndpoint( final String moduleName, final String endpointPath, final String httpMethod,
-      final Map<String, String> queryParameters ) {
+  public Response invokeEndpoint( String moduleName, String endpointPath, String httpMethod,
+                                  List<HttpParameter> httpParameters ) {
 
     if ( moduleName.equals( "platform" ) ) {
-      return invokePlatformEndpoint( endpointPath, httpMethod, queryParameters );
+      return invokePlatformEndpoint( endpointPath, httpMethod, httpParameters );
     } else {
-      return invokePluginEndpoint( moduleName, endpointPath, httpMethod, queryParameters );
+      return invokePluginEndpoint( moduleName, endpointPath, httpMethod, httpParameters );
     }
   }
 
-  protected Response invokePlatformEndpoint( final String endpointPath, final String httpMethod,
-      final Map<String, String> queryParameters ) {
+  protected Response invokePlatformEndpoint( String endpointPath, String httpMethod,
+                                             List<HttpParameter> httpParameters ) {
 
     Response response = new Response();
 
@@ -149,7 +150,7 @@ public class HttpConnectionHelper {
       servletRequest.setAttribute( "org.apache.catalina.core.DISPATCHER_TYPE", DispatcherType.FORWARD ); //FORWARD = 2
 
       try {
-        insertParameters( httpMethod, queryParameters, servletRequest );
+        insertParameters( httpMethod, httpParameters, servletRequest );
       } catch ( UnsupportedEncodingException e ) {
         logger.error( "Can't encode parameters" );
         return response;
@@ -190,24 +191,38 @@ public class HttpConnectionHelper {
     return response;
   }
 
-  protected void insertParameters( String httpMethod, Map<String, String> queryParameters,
+  protected void insertParameters( String httpMethod, List<HttpParameter> httpParameters,
       InternalHttpServletRequest servletRequest ) throws UnsupportedEncodingException {
-    if ( !httpMethod.equals( "GET" ) ) {
-      StringBuilder s = new StringBuilder();
-      boolean first = true;
-      for ( Map.Entry<String, String> entry : queryParameters.entrySet() ) {
-        if ( !first ) {
-          s.append( "&" );
-        }
-        s.append( entry.getKey() ).append( "=" ).append( URLEncoder.encode( entry.getValue(), UTF_8 ) );
-        first = false;
+    Http method;
+    if ( httpMethod == null ) {
+      httpMethod = "";
+    }
+    try {
+      method = Http.valueOf( httpMethod );
+    } catch ( IllegalArgumentException e ) {
+      logger.warn( "Method '" + httpMethod + "' is not supported - using 'GET'" );
+      method = Http.GET;
+    }
+
+    switch ( method ) {
+      case POST:
+      case PUT:
+      case DELETE:
+      case OPTIONS: {
+        List<HttpParameter> queryParameters = httpParameters.stream().filter( param -> param.getParamType() == HttpParameter.ParamType.QUERY ).collect( Collectors.toList() );
+        servletRequest.setContentType( "application/x-www-form-urlencoded" );
+        servletRequest.setContent( constructQueryString( httpParameters ).getBytes( UTF_8 ) );
+        break;
       }
-      servletRequest.setContentType( "application/x-www-form-urlencoded" );
-      servletRequest.setContent( s.toString().getBytes( ) );
-    } else {
-      for ( Map.Entry<String, String> entry : queryParameters.entrySet() ) {
-        String value = URLEncoder.encode( entry.getValue(), UTF_8 );
-        servletRequest.setParameter( entry.getKey(), value );
+      case GET:
+      case HEAD:
+      default: {
+        for ( HttpParameter parameter : httpParameters ) {
+          String value = URLEncoder.encode(parameter.getValue(), UTF_8);
+          String name = URLEncoder.encode(parameter.getName(), UTF_8);
+          servletRequest.setParameter(name, value);
+        }
+        break;
       }
     }
   }
@@ -224,8 +239,8 @@ public class HttpConnectionHelper {
     return PentahoSystem.getApplicationContext().getContext();
   }
 
-  protected Response invokePluginEndpoint( final String pluginName, final String endpointPath, final String httpMethod,
-      final Map<String, String> queryParameters ) {
+  protected Response invokePluginEndpoint( String pluginName, String endpointPath, String httpMethod,
+                                           List<HttpParameter> httpParameters ) {
 
     Response response = new Response();
     response.setStatusCode( 404 );
@@ -264,7 +279,7 @@ public class HttpConnectionHelper {
         fullyQualifiedServerURL, "/plugin", "/" + pluginName + "/api" + endpointPath );
 
     try {
-      insertParameters( httpMethod, queryParameters, servletRequest );
+      insertParameters( httpMethod, httpParameters, servletRequest );
     } catch ( UnsupportedEncodingException e ) {
       logger.error( "Can't encode parameters" );
       return response;
@@ -316,15 +331,16 @@ public class HttpConnectionHelper {
     return PentahoSystem.get( IPluginManager.class );
   }
 
-  public Response callHttp( String url, Map<String, String> queryParameters, String httpMethod, String user,
-      String password )
+  public Response callHttp(String url, List<HttpParameter> httpParameters,
+                           String httpMethod, String user,
+                           String password )
     throws IOException, KettleStepException {
 
     // used for calculating the responseTime
     long startTime = System.currentTimeMillis();
 
     HttpClient httpclient = getHttpClient();
-    HttpMethod method = getHttpMethod( url, queryParameters, httpMethod );
+    HttpMethod method = getHttpMethod( url, httpParameters, httpMethod );
     httpclient.getParams().setAuthenticationPreemptive( true );
     Credentials credentials = getCredentials( user, password );
     httpclient.getState().setCredentials( AuthScope.ANY, credentials );
@@ -384,28 +400,33 @@ public class HttpConnectionHelper {
     return new UsernamePasswordCredentials( user, password );
   }
 
-  protected HttpMethod getHttpMethod( String url, Map<String, String> queryParameters, String httpMethod ) {
-    org.pentaho.di.baserver.utils.inspector.HttpMethod method;
+  protected HttpMethod getHttpMethod(String url, List<HttpParameter> httpParameters,
+                                     String httpMethod) {
+    Http method;
     if ( httpMethod == null ) {
       httpMethod = "";
     }
     try {
-      method = org.pentaho.di.baserver.utils.inspector.HttpMethod.valueOf( httpMethod );
+      method = Http.valueOf( httpMethod );
     } catch ( IllegalArgumentException e ) {
       logger.warn( "Method '" + httpMethod + "' is not supported - using 'GET'" );
-      method = org.pentaho.di.baserver.utils.inspector.HttpMethod.GET;
+      method = Http.GET;
     }
+
+    List<HttpParameter> queryParameters = httpParameters.stream().filter( param -> param.getParamType() == HttpParameter.ParamType.QUERY ).collect( Collectors.toList() );
+    List<HttpParameter> bodyParameters = httpParameters.stream().filter( param -> param.getParamType() == HttpParameter.ParamType.BODY ).collect( Collectors.toList() );
+    List<HttpParameter> noneParameters = httpParameters.stream().filter( param -> param.getParamType() == HttpParameter.ParamType.NONE ).collect( Collectors.toList() );
 
     switch ( method ) {
       case GET:
-        return new GetMethod( url + constructQueryString( queryParameters ) );
+        return new GetMethod( url + constructQueryString( httpParameters ) );
       case POST:
-        PostMethod postMethod = new PostMethod( url );
-        setRequestEntity( postMethod, queryParameters );
+        PostMethod postMethod = new PostMethod( url + constructQueryString( queryParameters ) );
+        setRequestEntity( postMethod, bodyParameters );
         return postMethod;
-      case PUT:
-        PutMethod putMethod = new PutMethod( url );
-        setRequestEntity( putMethod, queryParameters );
+      case PUT :
+        PutMethod putMethod = new PutMethod( url + constructQueryString( queryParameters ) );
+        setRequestEntity( putMethod, bodyParameters );
         return putMethod;
       case DELETE:
         return new DeleteMethod( url + constructQueryString( queryParameters ) );
@@ -418,11 +439,11 @@ public class HttpConnectionHelper {
     }
   }
 
-  private void setRequestEntity( EntityEnclosingMethod method, Map<String, String> queryParameters ) {
+  private void setRequestEntity( EntityEnclosingMethod method, List<HttpParameter> httpParameters ) {
     try {
       // TODO: this supports only FormParameters, need to support MultiPart messages with files,
       // simple string values with JSON and XML, plain text, both body and query parameters for PUT
-      String queryString = constructQueryString( queryParameters );
+      String queryString = constructQueryString( httpParameters );
       if ( !queryString.isEmpty() ) {
         queryString = queryString.substring( 1 );
       }
@@ -432,19 +453,19 @@ public class HttpConnectionHelper {
     }
   }
 
-  private String constructQueryString( Map<String, String> queryParameters ) {
+  private String constructQueryString( List<HttpParameter> httpParameters ) {
     StringBuilder queryString = new StringBuilder();
-    if ( queryParameters != null && !queryParameters.isEmpty() ) {
+    if ( httpParameters != null && !httpParameters.isEmpty() ) {
       try {
         boolean first = true;
-        for ( String parameterName : queryParameters.keySet() ) {
+        for ( HttpParameter param : httpParameters ) {
           if ( first ) {
             queryString.append( "?" );
             first = false;
           } else {
             queryString.append( "&" );
           }
-          queryString.append( parameterName ).append( "=" ).append( URLEncoder.encode( queryParameters.get( parameterName ), UTF_8 ) );
+          queryString.append( URLEncoder.encode( param.getName(), UTF_8 ) ).append( "=" ).append( URLEncoder.encode( param.getValue(), UTF_8 ) );
         }
       } catch ( UnsupportedEncodingException e ) {
         logger.error( "Failed ", e );

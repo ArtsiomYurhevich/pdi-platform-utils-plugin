@@ -17,12 +17,22 @@
  */
 package org.pentaho.di.baserver.utils.inspector;
 
-public class QueryParam implements Comparable<QueryParam> {
+import org.pentaho.di.baserver.utils.web.HttpParameter;
+
+public class ParamDescription implements Comparable<ParamDescription> {
 
   private String name;
-  private String type;
+  private String contentType;
+  private HttpParameter.ParamType paramType;
 
-  public QueryParam() {
+  public ParamDescription() {
+    paramType = HttpParameter.ParamType.NONE;
+  }
+
+  public ParamDescription(String name, String contentType, HttpParameter.ParamType paramType ) {
+    this.name = name;
+    this.contentType = contentType;
+    this.paramType = paramType;
   }
 
   //region Getters and Setters
@@ -34,17 +44,26 @@ public class QueryParam implements Comparable<QueryParam> {
     this.name = name;
   }
 
-  public String getType() {
-    return this.type;
+  public String getContentType() {
+    return contentType;
   }
 
-  public void setType( String type ) {
-    this.type = type;
+  public void setContentType( String contentType ) {
+    this.contentType = contentType;
   }
+
+  public HttpParameter.ParamType getParamType() {
+    return paramType;
+  }
+
+  public void setParamType( HttpParameter.ParamType paramType ) {
+    this.paramType = paramType;
+  }
+
   //endregion
 
   @Override
-  public int compareTo( QueryParam other ) {
+  public int compareTo( ParamDescription other ) {
     if ( this == other ) {
       return 0;
     }
@@ -56,11 +75,11 @@ public class QueryParam implements Comparable<QueryParam> {
     if ( obj == this ) {
       return true;
     }
-    if ( obj == null || !( obj instanceof QueryParam ) ) {
+    if ( obj == null || !( obj instanceof ParamDescription) ) {
       return false;
     }
 
-    QueryParam other = (QueryParam) obj;
+    ParamDescription other = (ParamDescription) obj;
     return this.name.equals( other.name );
   }
 

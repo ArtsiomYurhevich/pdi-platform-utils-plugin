@@ -16,9 +16,9 @@
  * Copyright 2006 - 2015 Pentaho Corporation.  All rights reserved.
  */
 
-package org.pentaho.di.baserver.utils.inspector;
+package org.pentaho.di.baserver.utils.web;
 
-public enum HttpMethod {
+public enum Http {
   GET,
   POST,
   PUT,

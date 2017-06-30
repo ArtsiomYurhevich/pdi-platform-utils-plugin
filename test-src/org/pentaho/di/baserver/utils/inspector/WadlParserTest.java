@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.di.baserver.utils.CallEndpointMeta;
+import org.pentaho.di.baserver.utils.web.Http;
 import org.pentaho.di.i18n.BaseMessages;
 
 import java.io.File;
@@ -112,33 +113,33 @@ public class WadlParserTest {
     assertEquals( endpointList.size(), 142 );
 
     Endpoint endpoint = (Endpoint) endpointList.toArray()[ 0 ];
-    assertEquals( endpoint.getHttpMethod(), HttpMethod.POST );
+    assertEquals( endpoint.getHttpMethod(), Http.POST );
     assertEquals( endpoint.getId(), "addBlockout" );
     assertEquals( endpoint.getPath(), "/scheduler/blockout/add" );
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParamDescriptions().size(), 0 );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), true );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
 
     endpoint = (Endpoint) endpointList.toArray()[ 1 ];
-    assertEquals( endpoint.getHttpMethod(), HttpMethod.PUT );
+    assertEquals( endpoint.getHttpMethod(), Http.PUT );
     assertEquals( endpoint.getId(), "assignAllRolesToUser" );
     assertEquals( endpoint.getPath(), "/userroledao/assignAllRolesToUser" );
-    Collection<QueryParam> queryParamList = endpoint.getQueryParams();
-    assertEquals( queryParamList.size(), 2 );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 0 ] ).getName(), "tenant" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 0 ] ).getType(), "xs:string" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 1 ] ).getName(), "userName" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 1 ] ).getType(), "xs:string" );
+    Collection<ParamDescription> paramDescriptionList = endpoint.getParamDescriptions();
+    assertEquals( paramDescriptionList.size(), 2 );
+    assertEquals( ( (ParamDescription) paramDescriptionList.toArray()[ 0 ] ).getName(), "tenant" );
+    assertEquals( ( (ParamDescription) paramDescriptionList.toArray()[ 0 ] ).getContentType(), "xs:string" );
+    assertEquals( ( (ParamDescription) paramDescriptionList.toArray()[ 1 ] ).getName(), "userName" );
+    assertEquals( ( (ParamDescription) paramDescriptionList.toArray()[ 1 ] ).getContentType(), "xs:string" );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), false );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
 
     endpoint = (Endpoint) endpointList.toArray()[ 69 ];
-    assertEquals( endpoint.getHttpMethod(), HttpMethod.GET );
+    assertEquals( endpoint.getHttpMethod(), Http.GET );
     assertEquals( endpoint.getId(), "getAllRoles" );
     assertEquals( endpoint.getPath(), "/userrolelist/allRoles" );
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParamDescriptions().size(), 0 );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), true );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
@@ -154,7 +155,7 @@ public class WadlParserTest {
     when( resourceNode.valueOf( "@path" ) ).thenReturn( "" );
 
     final String id = "id";
-    final HttpMethod httpMethod = HttpMethod.GET;
+    final Http httpMethod = Http.GET;
     final Node mockNode = createMockNode( id, httpMethod );
     when( resourceNode.selectNodes( anyString() ) ).thenReturn( new ArrayList() {
       {
@@ -175,7 +176,7 @@ public class WadlParserTest {
   @Test
   public void testParseMethod() {
     final String id = "id";
-    final HttpMethod httpMethod = HttpMethod.GET;
+    final Http httpMethod = Http.GET;
     final String path = "path";
 
     final Endpoint endpoint = wadlParserSpy.parseMethod( createMockNode( id, httpMethod ), path );
@@ -188,7 +189,7 @@ public class WadlParserTest {
   @Test
   public void testParseQueryParam() {
     final String id = "id";
-    final HttpMethod httpMethod = HttpMethod.GET;
+    final Http httpMethod = Http.GET;
     final Node mockNode = createMockNode( id, httpMethod );
 
     final String name = "name";
@@ -196,10 +197,10 @@ public class WadlParserTest {
     doReturn( name ).when( mockNode ).valueOf( "@name" );
     doReturn( type ).when( mockNode ).valueOf( "@type" );
 
-    final QueryParam queryParam = wadlParserSpy.parseQueryParam( mockNode );
-    assertNotNull( queryParam );
-    assertEquals( queryParam.getName(), name );
-    assertEquals( queryParam.getType(), type );
+    final ParamDescription paramDescription = wadlParserSpy.parseParam( mockNode, ParamDescription.ParamType.QUERY );
+    assertNotNull(paramDescription);
+    assertEquals( paramDescription.getName(), name );
+    assertEquals( paramDescription.getContentType(), type );
   }
 
   @Test
@@ -232,7 +233,7 @@ public class WadlParserTest {
     assertEquals( path, shortPath );
   }
 
-  private Node createMockNode( String id, HttpMethod httpMethod ) {
+  private Node createMockNode( String id, Http httpMethod ) {
     final Node node = mock( Node.class );
     doReturn( id ).when( node ).valueOf( "@id" );
     doReturn( httpMethod.toString() ).when( node ).valueOf( "@name" );

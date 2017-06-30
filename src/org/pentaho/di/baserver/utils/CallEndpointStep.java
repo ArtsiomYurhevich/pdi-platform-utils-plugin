@@ -19,7 +19,11 @@
 package org.pentaho.di.baserver.utils;
 
 
+import org.pentaho.di.baserver.utils.inspector.Endpoint;
+import org.pentaho.di.baserver.utils.inspector.Inspector;
+import org.pentaho.di.baserver.utils.inspector.ParamDescription;
 import org.pentaho.di.baserver.utils.web.HttpConnectionHelper;
+import org.pentaho.di.baserver.utils.web.HttpParameter;
 import org.pentaho.di.baserver.utils.web.Response;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
@@ -36,13 +40,13 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class CallEndpointStep extends BaseStep implements StepInterface {
   private static Class<?> PKG = CallEndpointMeta.class; // for i18n purposes, needed by Translator2!!
   private CallEndpointMeta meta;
   private CallEndpointData data;
+  private Inspector inspector;
 
   public CallEndpointStep( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr,
                            TransMeta transMeta,
@@ -53,7 +57,7 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
   public boolean init( StepMetaInterface smi, StepDataInterface sdi ) {
     meta = (CallEndpointMeta) smi;
     data = (CallEndpointData) sdi;
-
+    inspector = Inspector.getInstance();
     return super.init( smi, sdi );
   }
 
@@ -91,9 +95,19 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
       httpMethod = environmentSubstitute( meta.getHttpMethod() );
     }
 
-    Map<String, String> queryParameters = new HashMap<String, String>();
+    Map<String, String> parameters = new HashMap<String, String>();
     for ( int i = 0; i < meta.getFieldName().length; i++ ) {
-      queryParameters.put( meta.getParameter()[ i ], getRowValue( rowData, i ) );
+      parameters.put( meta.getParameter()[ i ], getRowValue( rowData, i ) );
+    }
+
+    Endpoint endpoint = inspector.getDefaultEndpoint( moduleName, endpointPath );
+
+    List<HttpParameter> httpParameters = new ArrayList<>();
+
+    for ( Map.Entry<String,String> param: parameters.entrySet() ) {
+      ParamDescription description = endpoint.getParameterDescription( param.getKey() );
+      httpParameters.add( new HttpParameter( param.getKey(), param.getValue(),
+              description != null ? description.getParamType() : HttpParameter.ParamType.NONE ) );
     }
 
     Response response = null;
@@ -102,7 +116,7 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
       try {
         IPentahoSession session = PentahoSessionHolder.getSession();
         if ( session != null ) {
-          response = connectionHelper.invokeEndpoint( moduleName, endpointPath, httpMethod, queryParameters );
+          response = connectionHelper.invokeEndpoint( moduleName, endpointPath, httpMethod, httpParameters );
         }
       } catch ( NoClassDefFoundError ex ) {
         logBasic( "No valid session. Falling back to normal authentication mode." );
@@ -116,7 +130,7 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
       String password = environmentSubstitute( meta.getPassword() );
 
       response = connectionHelper.invokeEndpoint( serverUrl, username, password, moduleName, endpointPath, httpMethod,
-          queryParameters );
+          httpParameters );
     }
 
     int index = getInputRowMeta().size();

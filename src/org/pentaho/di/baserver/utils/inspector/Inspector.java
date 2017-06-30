@@ -290,10 +290,11 @@ public class Inspector {
   }
 
   protected Response callHttp( String endpointUrl ) {
-    return callHttp( endpointUrl, null, null );
+    return callHttp( endpointUrl, null, null, null );
   }
 
-  protected Response callHttp( String endpointUrl, Map<String, String> queryParameters, String httpMethod ) {
+  protected Response callHttp( String endpointUrl, Map<String, String> queryParameters,
+                               Map<String, String> bodyParameters, String httpMethod ) {
     Response response = null;
     try {
       response = HttpConnectionHelper.getInstance()

@@ -20,6 +20,8 @@ package org.pentaho.di.baserver.utils.inspector;
 
 import org.dom4j.Document;
 import org.dom4j.Node;
+import org.pentaho.di.baserver.utils.web.Http;
+import org.pentaho.di.baserver.utils.web.HttpParameter;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -65,13 +67,21 @@ public class WadlParser {
   protected Endpoint parseMethod( Node methodNode, final String path ) {
     Endpoint endpoint = new Endpoint();
     endpoint.setId( methodNode.valueOf( "@id" ) );
-    endpoint.setHttpMethod( HttpMethod.valueOf( methodNode.valueOf( "@name" ) ) );
+    endpoint.setHttpMethod( Http.valueOf( methodNode.valueOf( "@name" ) ) );
     endpoint.setPath( shortPath( path ) );
 
     Node requestNode = methodNode.selectSingleNode( "*[local-name() = 'request']" );
     if ( requestNode != null ) {
       for ( Object queryParamNode : requestNode.selectNodes( "*[local-name() = 'param']" ) ) {
-        endpoint.getQueryParams().add( parseQueryParam( (Node) queryParamNode ) );
+        endpoint.getParamDescriptions().add( parseParam( (Node) queryParamNode, HttpParameter.ParamType.QUERY ) );
+      }
+
+      Node representationNode = requestNode.selectSingleNode( "*[local-name() = 'representation' and @mediaType='application/x-www-form-urlencoded']" );
+
+      if ( representationNode != null ) {
+        for ( Object bodyParamNode : representationNode.selectNodes( "*[local-name() = 'param']" ) ) {
+          endpoint.getParamDescriptions().add( parseParam( (Node) bodyParamNode, HttpParameter.ParamType.BODY ) );
+        }
       }
     }
 
@@ -84,11 +94,8 @@ public class WadlParser {
     return endpoint;
   }
 
-  protected QueryParam parseQueryParam( Node queryParamNode ) {
-    QueryParam queryParam = new QueryParam();
-    queryParam.setName( queryParamNode.valueOf( "@name" ) );
-    queryParam.setType( queryParamNode.valueOf( "@type" ) );
-    return queryParam;
+  protected ParamDescription parseParam(Node queryParamNode, HttpParameter.ParamType paramType ) {
+    return new ParamDescription( queryParamNode.valueOf( "@name" ), queryParamNode.valueOf( "@type" ), paramType );
   }
 
   protected String sanitizePath( String path ) {
