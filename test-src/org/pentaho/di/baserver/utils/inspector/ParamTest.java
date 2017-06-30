@@ -25,64 +25,64 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.pentaho.di.core.util.Assert.assertTrue;
 
-public class QueryParamTest {
-  private QueryParam queryParam;
+public class ParamTest {
+  private Param param;
 
 
   @Before
   public void setup() {
-    queryParam = new QueryParam();
+    param = new Param();
   }
 
   @Test
   public void testGet() {
     String name = "paramName";
-    queryParam.setName( name );
-    assertEquals( queryParam.getName(), name );
+    param.setName( name );
+    assertEquals( param.getName(), name );
 
     String type = "String";
-    queryParam.setType( type );
-    assertEquals( queryParam.getType(), type );
+    param.setContentType( type );
+    assertEquals( param.getContentType(), type );
   }
 
   @Test
   public void testCompareTo() {
     String name = "paramName",
         name2 = "paramName1234";
-    queryParam.setName( name );
+    param.setName( name );
 
-    assertEquals( queryParam.compareTo( queryParam ), name.compareTo( name ) );
+    assertEquals( param.compareTo( param ), name.compareTo( name ) );
 
-    QueryParam queryParam2 = new QueryParam();
-    queryParam2.setName( name2 );
+    Param param2 = new Param();
+    param2.setName( name2 );
 
-    assertEquals( queryParam.compareTo( queryParam2 ), name.compareTo( name2 ) );
+    assertEquals( param.compareTo( param2 ), name.compareTo( name2 ) );
   }
 
   @Test
   public void testEquals() {
     String name = "paramName";
-    queryParam.setName( name );
+    param.setName( name );
 
-    assertTrue( queryParam.equals( queryParam ) );
+    assertTrue( param.equals( param ) );
 
-    QueryParam queryParam2 = new QueryParam();
-    queryParam2.setName( name );
-    assertTrue( queryParam.equals( queryParam2 ) );
+    Param param2 = new Param();
+    param2.setName( name );
+    assertTrue( param.equals( param2 ) );
 
-    assertFalse( queryParam.equals( null ) );
-    assertFalse( queryParam.equals( new Endpoint() ) );
+    assertFalse( param.equals( null ) );
+    assertFalse( param.equals( new Endpoint() ) );
 
-    queryParam2.setName( "12345" );
-    assertFalse( queryParam.equals( queryParam2 ) );
+    param2.setName( "12345" );
+    assertFalse( param.equals( param2 ) );
   }
 
   @Test
   public void testHashCode() {
     String name = "paramName";
-    queryParam.setName( name );
+    param.setName( name );
 
-    assertEquals( name.hashCode(), queryParam.hashCode() );
+    assertEquals( name.hashCode(), param.hashCode() );
   }
 
 }

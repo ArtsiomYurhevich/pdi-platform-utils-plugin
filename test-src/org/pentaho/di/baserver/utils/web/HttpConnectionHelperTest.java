@@ -282,7 +282,7 @@ public class HttpConnectionHelperTest {
 
     doReturn( httpClient ).when( httpConnectionHelperSpy ).getHttpClient();
     HttpMethod httpMethod = mock( HttpMethod.class );
-    doReturn( httpMethod ).when( httpConnectionHelperSpy ).getHttpMethod( url, parameters, method );
+    doReturn( httpMethod ).when( httpConnectionHelperSpy ).getHttpMethod( url, parameters, bodyParameters, method );
 
     doThrow( new IllegalArgumentException() ).when( httpClient ).executeMethod( any( HostConfiguration.class ),
         eq( httpMethod ) );
@@ -317,12 +317,12 @@ public class HttpConnectionHelperTest {
     queryParameters.put( "param3", "value3" );
     String url = "http://localhost:8080/pentaho";
 
-    HttpMethod method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "GET" );
+    HttpMethod method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "GET" );
     assertEquals( method.getClass(), GetMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     assertNotNull( method.getQueryString() );
 
-    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "PUT" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "PUT" );
     assertEquals( method.getClass(), PutMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     RequestEntity requestEntity = ( (PutMethod) method ).getRequestEntity();
@@ -332,7 +332,7 @@ public class HttpConnectionHelperTest {
     assertEquals( requestEntity.getClass(), StringRequestEntity.class );
     assertNotNull( ( (StringRequestEntity) requestEntity ).getContent() );
 
-    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "POST" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "POST" );
     assertEquals( method.getClass(), PostMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     requestEntity = ( (PostMethod) method ).getRequestEntity();
@@ -343,7 +343,7 @@ public class HttpConnectionHelperTest {
     assertNotNull( ( (StringRequestEntity) requestEntity ).getContent() );
 
     // POST without parameters
-    method = httpConnectionHelperSpy.getHttpMethod( url, null, "POST" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, null, bodyParameters, "POST" );
     assertEquals( method.getClass(), PostMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     requestEntity = ( (PostMethod) method ).getRequestEntity();
@@ -353,17 +353,17 @@ public class HttpConnectionHelperTest {
     assertEquals( requestEntity.getClass(), StringRequestEntity.class );
     assertNotNull( ( (StringRequestEntity) requestEntity ).getContent() );
 
-    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "DELETE" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "DELETE" );
     assertEquals( method.getClass(), DeleteMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     assertNotNull( method.getQueryString() );
 
-    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "HEAD" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "HEAD" );
     assertEquals( method.getClass(), HeadMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     assertNotNull( method.getQueryString() );
 
-    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, "OPTIONS" );
+    method = httpConnectionHelperSpy.getHttpMethod( url, queryParameters, bodyParameters, "OPTIONS" );
     assertEquals( method.getClass(), OptionsMethod.class );
     assertTrue( method.getURI().toString().startsWith( url ) );
     assertNotNull( method.getQueryString() );

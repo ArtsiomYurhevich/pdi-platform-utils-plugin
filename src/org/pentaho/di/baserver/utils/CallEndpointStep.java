@@ -91,9 +91,9 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
       httpMethod = environmentSubstitute( meta.getHttpMethod() );
     }
 
-    Map<String, String> queryParameters = new HashMap<String, String>();
+    Map<String, String> parameters = new HashMap<String, String>();
     for ( int i = 0; i < meta.getFieldName().length; i++ ) {
-      queryParameters.put( meta.getParameter()[ i ], getRowValue( rowData, i ) );
+      parameters.put( meta.getParameter()[ i ], getRowValue( rowData, i ) );
     }
 
     Response response = null;
@@ -102,7 +102,7 @@ public class CallEndpointStep extends BaseStep implements StepInterface {
       try {
         IPentahoSession session = PentahoSessionHolder.getSession();
         if ( session != null ) {
-          response = connectionHelper.invokeEndpoint( moduleName, endpointPath, httpMethod, queryParameters );
+          response = connectionHelper.invokeEndpoint( moduleName, endpointPath, httpMethod, parameters );
         }
       } catch ( NoClassDefFoundError ex ) {
         logBasic( "No valid session. Falling back to normal authentication mode." );

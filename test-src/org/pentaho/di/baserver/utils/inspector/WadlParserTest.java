@@ -115,7 +115,7 @@ public class WadlParserTest {
     assertEquals( endpoint.getHttpMethod(), HttpMethod.POST );
     assertEquals( endpoint.getId(), "addBlockout" );
     assertEquals( endpoint.getPath(), "/scheduler/blockout/add" );
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParams().size(), 0 );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), true );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
@@ -124,12 +124,12 @@ public class WadlParserTest {
     assertEquals( endpoint.getHttpMethod(), HttpMethod.PUT );
     assertEquals( endpoint.getId(), "assignAllRolesToUser" );
     assertEquals( endpoint.getPath(), "/userroledao/assignAllRolesToUser" );
-    Collection<QueryParam> queryParamList = endpoint.getQueryParams();
-    assertEquals( queryParamList.size(), 2 );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 0 ] ).getName(), "tenant" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 0 ] ).getType(), "xs:string" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 1 ] ).getName(), "userName" );
-    assertEquals( ( (QueryParam) queryParamList.toArray()[ 1 ] ).getType(), "xs:string" );
+    Collection<Param> paramList = endpoint.getParams();
+    assertEquals( paramList.size(), 2 );
+    assertEquals( ( (Param) paramList.toArray()[ 0 ] ).getName(), "tenant" );
+    assertEquals( ( (Param) paramList.toArray()[ 0 ] ).getContentType(), "xs:string" );
+    assertEquals( ( (Param) paramList.toArray()[ 1 ] ).getName(), "userName" );
+    assertEquals( ( (Param) paramList.toArray()[ 1 ] ).getContentType(), "xs:string" );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), false );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
@@ -138,7 +138,7 @@ public class WadlParserTest {
     assertEquals( endpoint.getHttpMethod(), HttpMethod.GET );
     assertEquals( endpoint.getId(), "getAllRoles" );
     assertEquals( endpoint.getPath(), "/userrolelist/allRoles" );
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParams().size(), 0 );
     assertEquals( endpoint.isDeprecated(), false );
     assertEquals( endpoint.isSupported(), true );
     assertEquals( endpoint.getDocumentation().isEmpty(), false );
@@ -196,10 +196,10 @@ public class WadlParserTest {
     doReturn( name ).when( mockNode ).valueOf( "@name" );
     doReturn( type ).when( mockNode ).valueOf( "@type" );
 
-    final QueryParam queryParam = wadlParserSpy.parseQueryParam( mockNode );
-    assertNotNull( queryParam );
-    assertEquals( queryParam.getName(), name );
-    assertEquals( queryParam.getType(), type );
+    final Param param = wadlParserSpy.parseParam( mockNode, Param.ParamType.QUERY );
+    assertNotNull( param );
+    assertEquals( param.getName(), name );
+    assertEquals( param.getContentType(), type );
   }
 
   @Test

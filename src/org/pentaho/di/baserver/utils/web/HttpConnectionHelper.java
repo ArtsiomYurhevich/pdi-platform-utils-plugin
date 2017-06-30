@@ -71,7 +71,7 @@ public class HttpConnectionHelper {
 
   public Response invokeEndpoint( final String serverUrl, final String userName, final String password,
       final String moduleName, final String endpointPath, final String httpMethod,
-      final Map<String, String> queryParameters ) {
+      final Map<String, String> queryParameters, Map<String, String> formParameters ) {
 
     Response response = new Response();
 
@@ -95,7 +95,7 @@ public class HttpConnectionHelper {
     logger.info( "requestUrl = " + requestUrl );
 
     try {
-      response = callHttp( requestUrl, queryParameters, httpMethod, userName, password );
+      response = callHttp( requestUrl, parameters, httpMethod, userName, password );
     } catch ( IOException ex ) {
       logger.error( "Failed ", ex );
     } catch ( KettleStepException ex ) {
@@ -316,7 +316,8 @@ public class HttpConnectionHelper {
     return PentahoSystem.get( IPluginManager.class );
   }
 
-  public Response callHttp( String url, Map<String, String> queryParameters, String httpMethod, String user,
+  public Response callHttp( String url, Map<String, String> queryParameters, Map<String, String> bodyParameters,
+                            String httpMethod, String user,
       String password )
     throws IOException, KettleStepException {
 
@@ -324,7 +325,7 @@ public class HttpConnectionHelper {
     long startTime = System.currentTimeMillis();
 
     HttpClient httpclient = getHttpClient();
-    HttpMethod method = getHttpMethod( url, queryParameters, httpMethod );
+    HttpMethod method = getHttpMethod( url, queryParameters, bodyParameters, httpMethod );
     httpclient.getParams().setAuthenticationPreemptive( true );
     Credentials credentials = getCredentials( user, password );
     httpclient.getState().setCredentials( AuthScope.ANY, credentials );
@@ -384,7 +385,8 @@ public class HttpConnectionHelper {
     return new UsernamePasswordCredentials( user, password );
   }
 
-  protected HttpMethod getHttpMethod( String url, Map<String, String> queryParameters, String httpMethod ) {
+  protected HttpMethod getHttpMethod( String url, Map<String, String> queryParameters,
+                                      Map<String, String> bodyParameters, String httpMethod ) {
     org.pentaho.di.baserver.utils.inspector.HttpMethod method;
     if ( httpMethod == null ) {
       httpMethod = "";
@@ -400,12 +402,12 @@ public class HttpConnectionHelper {
       case GET:
         return new GetMethod( url + constructQueryString( queryParameters ) );
       case POST:
-        PostMethod postMethod = new PostMethod( url );
-        setRequestEntity( postMethod, queryParameters );
+        PostMethod postMethod = new PostMethod( url + constructQueryString(  queryParameters ) );
+        setRequestEntity( postMethod, bodyParameters );
         return postMethod;
-      case PUT:
-        PutMethod putMethod = new PutMethod( url );
-        setRequestEntity( putMethod, queryParameters );
+      case PUT :
+        PutMethod putMethod = new PutMethod( url + constructQueryString( queryParameters ) );
+        setRequestEntity( putMethod, bodyParameters );
         return putMethod;
       case DELETE:
         return new DeleteMethod( url + constructQueryString( queryParameters ) );

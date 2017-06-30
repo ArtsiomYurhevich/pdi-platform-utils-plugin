@@ -71,7 +71,15 @@ public class WadlParser {
     Node requestNode = methodNode.selectSingleNode( "*[local-name() = 'request']" );
     if ( requestNode != null ) {
       for ( Object queryParamNode : requestNode.selectNodes( "*[local-name() = 'param']" ) ) {
-        endpoint.getQueryParams().add( parseQueryParam( (Node) queryParamNode ) );
+        endpoint.getParams().add( parseParam( (Node) queryParamNode, Param.ParamType.QUERY ) );
+      }
+
+      Node representationNode = requestNode.selectSingleNode( "*[local-name() = 'representation' and @mediaType='application/x-www-form-urlencoded']" );
+
+      if ( representationNode != null ) {
+        for ( Object bodyParamNode : representationNode.selectNodes( "*[local-name() = 'param']" ) ) {
+          endpoint.getParams().add( parseParam( (Node) bodyParamNode, Param.ParamType.BODY ) );
+        }
       }
     }
 
@@ -84,11 +92,8 @@ public class WadlParser {
     return endpoint;
   }
 
-  protected QueryParam parseQueryParam( Node queryParamNode ) {
-    QueryParam queryParam = new QueryParam();
-    queryParam.setName( queryParamNode.valueOf( "@name" ) );
-    queryParam.setType( queryParamNode.valueOf( "@type" ) );
-    return queryParam;
+  protected Param parseParam( Node queryParamNode, Param.ParamType paramType ) {
+    return new Param( queryParamNode.valueOf( "@name" ), queryParamNode.valueOf( "@type" ), paramType );
   }
 
   protected String sanitizePath( String path ) {

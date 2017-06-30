@@ -27,7 +27,7 @@ public class Endpoint implements Comparable<Endpoint> {
   private String id;
   private String path;
   private HttpMethod httpMethod;
-  private ArrayList<QueryParam> queryParams;
+  private ArrayList<Param> params;
   private boolean deprecated;
   private boolean supported;
   private String documentation;
@@ -60,8 +60,8 @@ public class Endpoint implements Comparable<Endpoint> {
     this.httpMethod = httpMethod;
   }
 
-  public Collection<QueryParam> getQueryParams() {
-    return this.queryParams;
+  public Collection<Param> getParams() {
+    return this.params;
   }
 
   public boolean isDeprecated() {
@@ -93,7 +93,7 @@ public class Endpoint implements Comparable<Endpoint> {
   // region Constructors
 
   public Endpoint() {
-    this.queryParams = new ArrayList<QueryParam>();
+    this.params = new ArrayList<Param>();
   }
 
   // endregion

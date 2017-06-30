@@ -35,7 +35,7 @@ public class EndpointTest {
 
   @Test
   public void testConstructor() {
-    assertEquals( endpoint.getQueryParams().size(), 0 );
+    assertEquals( endpoint.getParams().size(), 0 );
   }
 
   @Test
@@ -76,7 +76,7 @@ public class EndpointTest {
     endpoint2.setId( id );
     assertTrue( endpoint.equals( endpoint2 ) );
     assertFalse( endpoint.equals( null ) );
-    assertFalse( endpoint.equals( new QueryParam() ) );
+    assertFalse( endpoint.equals( new Param() ) );
 
     endpoint2.setId( "12345" );
     assertFalse( endpoint.equals( endpoint2 ) );
